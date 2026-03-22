@@ -1,0 +1,99 @@
+src/
+├─ config/
+│  └─ db.ts                # Prisma + PostgreSQL connection
+├─ routes/
+│  └─ authRoutes.ts        # auth endpoints
+│  └─ metricRoutes.ts      # REST endpoints для метрик
+├─ controllers/
+│  └─ authController.ts
+│  └─ metricController.ts  # логика REST endpoints для метрик
+├─ websocket/
+│  ├─ socket.ts            # инициализация Socket.IO
+│  ├─ metricStream.ts      # автоматический генератор метрик
+│  └─ metricService.ts     # единая функция генерации метрики (DB + WebSocket)
+├─ services/
+│  └─ metricGenerator.ts   # чистая генерация fake metric без side effects
+├─ types/
+│  └─ req.ts
+├─ utils/
+│  └─ generateToken.ts
+├─ server.ts               # точка входа (Express + WebSocket)
+└─ test.ts                 # тест Socket.IO клиента
+
+1.
+create src
+
+2.
+before src
+
+npm init -y
+npm i nodemon
+npm install express cors jsonwebtoken bcryptjs socket.io
+npm install prisma @prisma/client
+npm install -D typescript ts-node-dev @types/node @types/express @types/jsonwebtoken
+npm install prisma @types/node @types/pg --save-dev
+npm install @prisma/client @prisma/adapter-pg pg dotenv
+
+npx tsc --init
+
+3.
+npx prisma init
+
+4.
+create model in schema.prisma
+
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  password String
+  createdAt DateTime @default(now())
+}
+
+5.
+docker run --name postgres-db \
+  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_USER=myuser \
+  -e POSTGRES_DB=mydatabase \
+  -p 5432:5432 \
+  -v postgres-data:/var/lib/postgresql/data \
+  -d postgres
+
+  Если нужна конкретная версия, например, 16 -> (-d postgres:16)
+
+6.
+DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/mydatabase"
+
+7.
+npx prisma migrate dev --name init
+Если включен VPN, может не сработать на Linux
+
+!!! 
+If some sh*t happens try
+
+rm -rf node_modules
+rm -rf src/generated
+rm package-lock.json
+
+npm install
+npx prisma generate
+npx prisma db push
+
+8.
+Create scripts in package.json
+
+"scripts": {
+    "start": "node src/server.ts",
+    "dev": "nodemon src/server.ts"
+},
+
+9.
+Change "type": "commonjs" -> "type": "module"
+
+10.
+npm run start
+
+11.
+npm install socket.io
+npm install -D @types/socket.io
+
+12.
